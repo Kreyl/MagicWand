@@ -1,7 +1,7 @@
 {
   "board": {
     "active_layer": 0,
-    "active_layer_preset": "_TopSilks",
+    "active_layer_preset": "",
     "auto_track_width": true,
     "hidden_netclasses": [],
     "hidden_nets": [],
@@ -17,12 +17,12 @@
     "selection_filter": {
       "dimensions": false,
       "footprints": false,
-      "graphics": true,
-      "keepouts": true,
+      "graphics": false,
+      "keepouts": false,
       "lockedItems": false,
       "otherItems": false,
       "pads": false,
-      "text": false,
+      "text": true,
       "tracks": false,
       "vias": false,
       "zones": true
@@ -36,6 +36,7 @@
       5,
       9,
       10,
+      11,
       12,
       13,
       15,
@@ -61,7 +62,7 @@
       36,
       40
     ],
-    "visible_layers": "002112a_00000001",
+    "visible_layers": "002100a_00000003",
     "zone_display_mode": 0
   },
   "meta": {
