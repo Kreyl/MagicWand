@@ -45,7 +45,7 @@
         "silk_text_thickness": 0.15,
         "silk_text_upright": false,
         "zones": {
-          "min_clearance": 0.5
+          "min_clearance": 0.3
         }
       },
       "diff_pair_dimensions": [
@@ -270,6 +270,53 @@
           160,
           161,
           164,
+          165
+        ]
+      },
+      {
+        "activeLayer": -2,
+        "layers": [
+          0,
+          33,
+          35,
+          37,
+          40,
+          44,
+          49
+        ],
+        "name": "_TopSilks",
+        "renderLayers": [
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          134,
+          135,
+          137,
+          138,
+          140,
+          141,
+          142,
+          143,
+          144,
+          145,
+          146,
+          147,
+          148,
+          149,
+          150,
+          151,
+          152,
+          153,
+          154,
+          155,
+          157,
+          158,
+          159,
+          160,
+          161,
           165
         ]
       }
@@ -569,6 +616,10 @@
       {
         "netclass": "Wide",
         "pattern": "/WHITE_OUT"
+      },
+      {
+        "netclass": "Wide",
+        "pattern": "/LED*"
       }
     ]
   },
@@ -577,7 +628,7 @@
       "gencad": "",
       "idf": "",
       "netlist": "",
-      "specctra_dsn": "",
+      "specctra_dsn": "MagicWand.dsn",
       "step": "",
       "vrml": ""
     },

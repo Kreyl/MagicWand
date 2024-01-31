@@ -1,2 +1,4 @@
 MagicWand_hw/#auto_saved_files#
 MagicWand_hw/MagicWand-backups/
+*.dsn
+*.ses
