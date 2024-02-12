@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--**************************************-->
-<!--   File    : MagicWand.fsproj         -->
-<!--   Format  : TopoR Project file       -->
-<!--   Version : 2                        -->
-<!--   Program : TopoR 8 Layer 7.0.18661  -->
-<!--   Date    : Monday, January 29, 2024 -->
-<!--   Time    : 21:07                    -->
-<!--**************************************-->
+<!--*****************************************-->
+<!--   File    : MagicWand.fsproj            -->
+<!--   Format  : TopoR Project file          -->
+<!--   Version : 2                           -->
+<!--   Program : TopoR 8 Layer 7.0.18746     -->
+<!--   Date    : Wednesday, January 31, 2024 -->
+<!--   Time    : 20:42                       -->
+<!--*****************************************-->
 
 <Project>
    <Version current="2"/>
-   <GUID>{6EE314B4-0ECE-4DD8-AB71-8A5EC47E9C3A}</GUID>
+   <GUID>{56D7F882-3CAB-492A-8748-0B5BCA2F8B8C}</GUID>
    <Documents>
       <Section name="PCB" isExpanded="true">
-         <File path=".\MagicWand.fsx" isopened="0" dateChange="2024-01-29 21:07:08"/>
+         <File path=".\MagicWand.fsx" isopened="1" dateChange="2024-01-31 17:03:04"/>
       </Section>
       <Section name="AutoRouting" isExpanded="false"/>
    </Documents>
