@@ -8,6 +8,8 @@
 #ifndef KL_USB_DEFINS_H__
 #define KL_USB_DEFINS_H__
 
+#include <inttypes.h>
+
 struct SetupPkt_t {
     union {
         uint8_t bmRequestType;

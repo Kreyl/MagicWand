@@ -2,3 +2,4 @@ MagicWand_hw/#auto_saved_files#
 MagicWand_hw/MagicWand-backups/
 *.dsn
 *.ses
+FwUpdater_py/__pycache__/

@@ -11,7 +11,7 @@
 #include "buttons.h"
 #include "EvtMsgIDs.h"
 #include "usb_cdc.h"
-//#include "FwUpdateF072.h"
+#include "FwUpdateF072.h"
 //#include "ir.h"
 
 #if 1 // ======================== Variables and defines ========================
@@ -57,7 +57,10 @@ void CheckBtnAndDoAvada() {
         chThdSleepMilliseconds(153);
         GreenFlash.SetLo();
         // Wait btn release
-        while(Btns[0].IsPressed()) chThdSleepMilliseconds(72);
+        while(Btns[0].IsPressed()) {
+            Iwdg::Reload();
+            chThdSleepMilliseconds(72);
+        }
     }
 }
 
@@ -148,7 +151,6 @@ void ITask() {
                 // Process Avada if USB is not connected
                 if(UsbDetect.IsLo()) CheckBtnAndDoAvada();
                 // Check Lumos always
-//                Printf("Sta: %u %u %u\r", LumosState, Btns[1].IsPressed(), Btns[2].IsPressed());
                 if(Btns[1].IsPressed() or Btns[2].IsPressed()) {
                     if(LumosState == lstaOff or LumosState == lstaFadeout) {
                         SleepTmr.Stop();
@@ -272,9 +274,8 @@ void OnCmd(Shell_t *PShell) {
     }
 
 
-#if 0 // ==== FW Update ====
+#if 1 // ==== FW Update ====
     else if(PCmd->NameIs("UpdateFwRestart")) {
-        Reset(true); // Do not print "#Reset"
         FwUpdater.Restart();
         PShell->Ok();
     }

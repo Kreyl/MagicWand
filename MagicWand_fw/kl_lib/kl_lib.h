@@ -1858,8 +1858,9 @@ public:
  * APB  freq max = 48 MHz;
  */
 
-#define HSI_FREQ_HZ     8000000 // Freq of internal generator, not adjustable
-#define HSI48_FREQ_HZ   48000000
+#define HSI_FREQ_HZ     8000000UL // Freq of internal generator, not adjustable
+#define HSI48_FREQ_HZ   48000000UL
+#define LSI_FREQ_HZ     40000UL   // Freq of low power internal generator, may vary depending on voltage, not adjustable
 
 enum PllMul_t {
     pllMul2=0,
@@ -1931,6 +1932,11 @@ public:
         RCC->BDCR &= ~RCC_BDCR_LSEDRV;
         RCC->BDCR |= ((uint32_t)Lvl) << 3;
     }
+    void EnableLsi() {
+        RCC->CSR |= RCC_CSR_LSION;
+        while ((RCC->CSR & RCC_CSR_LSIRDY) == 0);
+    }
+
     void EnableCRS();
     void EnableCSS()    { RCC->CR  |=  RCC_CR_CSSON; }
     // Clk Disables
