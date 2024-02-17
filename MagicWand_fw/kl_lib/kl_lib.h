@@ -1100,6 +1100,7 @@ public:
     void Init() const { PinSetupInput(ISetup.PGpio, ISetup.Pin, ISetup.PullUpDown); }
     void Deinit() const { PinSetupAnalog(ISetup.PGpio, ISetup.Pin); }
     bool IsHi() const { return PinIsHi(ISetup.PGpio, ISetup.Pin); }
+    bool IsLo() const { return PinIsLo(ISetup.PGpio, ISetup.Pin); }
     PinInput_t(const PinInputSetup_t &ASetup) : ISetup(ASetup) {}
     PinInput_t(GPIO_TypeDef *APGpio, uint16_t APin, PinPullUpDown_t APullUpDown) :
         ISetup(APGpio, APin, APullUpDown) {}

@@ -74,10 +74,14 @@
 #define ACC_PWR         GPIOB, 14
 #define ACC_INT1        GPIOB, 15 // WKUP7
 
+// USB
+#define USB_DETECT_PIN  GPIOB, 5 // WKUP6
+#define USB_DM          GPIOA, 11
+#define USB_DP          GPIOA, 12
+
 // Others
 #define IS_CHARGING_PIN GPIOC, 14
 #define VIBRO_PIN       { GPIOB, 1, TIM3, 4, invNotInverted, omPushPull, 255 }
-#define USB_DETECT_PIN  GPIOB, 5 // WKUP6
 
 #endif // GPIO
 

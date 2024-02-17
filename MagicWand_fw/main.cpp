@@ -10,6 +10,7 @@
 #include "SimpleSensors.h"
 #include "buttons.h"
 #include "EvtMsgIDs.h"
+#include "usb_cdc.h"
 //#include "FwUpdateF072.h"
 //#include "ir.h"
 
@@ -42,6 +43,10 @@ public:
 
 Btn_t Btns[] = { {BTN1_PIN}, {BTN2_PIN}, {BTN3_PIN} };
 
+PinInput_t UsbDetect{USB_DETECT_PIN, pudPullDown};
+PinInput_t IsCharging{IS_CHARGING_PIN, pudPullUp};
+
+
 static TmrKL_t CheckTmr {72, evtIdCheckTimer, tktPeriodic};
 static TmrKL_t SleepTmr {999, evtIdSleepTimer, tktOneShot};
 
@@ -61,6 +66,8 @@ LumosState_t LumosState = lstaOff;
 
 static void EnterSleepNow();
 static void EnterSleep();
+static void ProcessUsbDetect();
+static void ProcessIsCharging();
 
 // === Vector table moving to SRAM ==
 #if FROM_BOOT
@@ -108,14 +115,21 @@ void main() {
     Lumos.SetupSeqEndEvt(EvtMsg_t(evtIdLumosDone));
     GreenFlash.Init();
 
-    // Buttons
+    // Buttons, charging, usb detect
     for(auto &Btn : Btns) Btn.Init();
-    CheckBtnAndDoAvada();
-    if(Btns[1].IsPressed() or Btns[2].IsPressed()) {
-        Lumos.StartOrRestart(lsqFadeIn);
-        LumosState = lstaFadein;
+    UsbDetect.Init();
+    IsCharging.Init();
+
+    // Process LEDs if USB is not connected
+    if(UsbDetect.IsLo()) {
+        CheckBtnAndDoAvada();
+        if(Btns[1].IsPressed() or Btns[2].IsPressed()) {
+            Lumos.StartOrRestart(lsqFadeIn);
+            LumosState = lstaFadein;
+        }
     }
 
+    UsbCDC.Init();
     CheckTmr.StartOrRestart();
 
     ITask(); // Main cycle
@@ -131,8 +145,9 @@ void ITask() {
                 break;
 
             case evtIdCheckTimer:
-                CheckBtnAndDoAvada();
-                // Check Lumos
+                // Process Avada if USB is not connected
+                if(UsbDetect.IsLo()) CheckBtnAndDoAvada();
+                // Check Lumos always
 //                Printf("Sta: %u %u %u\r", LumosState, Btns[1].IsPressed(), Btns[2].IsPressed());
                 if(Btns[1].IsPressed() or Btns[2].IsPressed()) {
                     if(LumosState == lstaOff or LumosState == lstaFadeout) {
@@ -144,7 +159,7 @@ void ITask() {
                 else { // No btn is pressed
                     switch(LumosState) {
                         case lstaOff:
-                            SleepTmr.StartIfNotRunning();
+                            if(UsbDetect.IsLo()) SleepTmr.StartIfNotRunning();
                             break;
                         case lstaFadein:
                         case lstaOn:
@@ -154,6 +169,8 @@ void ITask() {
                         case lstaFadeout: break;
                     } // switch
                 } // btns
+                ProcessUsbDetect();
+                ProcessIsCharging();
                 break;
 
             case evtIdLumosDone:
@@ -166,28 +183,58 @@ void ITask() {
 
             case evtIdSleepTimer: EnterSleep(); break;
 
+#if 1       // ======= USB =======
+            case evtIdUsbCmdRcvd:
+                OnCmd((Shell_t*)&UsbCDC);
+                UsbCDC.SignalCmdProcessed();
+                break;
+
+            case evtIdUsbConnect:
+                Printf("USB connect\r");
+                if(Clk.EnableHSI48() == retvOk) {
+                    Clk.SelectUSBClock_HSI48();
+                    Clk.EnableCRS();
+                    UsbCDC.Connect();
+                }
+                else Printf("HSI48 fail\r");
+                break;
+
+            case evtIdUsbDisconnect:
+                UsbCDC.Disconnect();
+                Clk.DisableCRS();
+                Clk.DisableHSI48();
+                Printf("USB disconnect\r");
+                break;
+
+            case evtIdUsbReady:
+                Printf("USB ready\r");
+                break;
+#endif
+
             default: break;
         } // switch
     } // while true
 }
 
-void ProcessUsbDetect(PinSnsState_t *PState, uint32_t Len) {
-//    if((*PState == pssRising or *PState == pssHi) and !UsbIsConnected) {
-//        UsbIsConnected = true;
-//        EvtQMain.SendNowOrExit(EvtMsg_t(evtIdUsbConnect));
-//    }
-//    else if((*PState == pssFalling or *PState == pssLo) and UsbIsConnected) {
-//        UsbIsConnected = false;
-//        EvtQMain.SendNowOrExit(EvtMsg_t(evtIdUsbDisconnect));
-//    }
+void ProcessUsbDetect() {
+    static bool WasConnected = false;
+    if(UsbDetect.IsHi() and !WasConnected) {
+        SleepTmr.Stop();
+        WasConnected = true;
+        EvtQMain.SendNowOrExit(EvtMsg_t(evtIdUsbConnect));
+    }
+    else if(UsbDetect.IsLo() and WasConnected) {
+        WasConnected = false;
+        EvtQMain.SendNowOrExit(EvtMsg_t(evtIdUsbDisconnect));
+    }
 }
 
-void ProcessCharging(PinSnsState_t *PState, uint32_t Len) {
-//    if(*PState == pssLo) InfoLed.StartOrContinue(lbsqCharging);
-//    else if(*PState == pssHi) { // Charge stopped
-//        if(UsbIsConnected) InfoLed.StartOrContinue(lbsqChargingDone);
-//        else               InfoLed.Stop();
-//    }
+void ProcessIsCharging() {
+    if(IsCharging.IsLo()) SysLed.StartOrContinue(lsqCharging); // Is charging
+    else { // Not charging
+        if(UsbDetect.IsHi()) SysLed.StartOrContinue(lsqFadeIn);
+        else SysLed.StartOrContinue(lsqChargingStopped);
+    }
 }
 
 void EnterSleep() {

@@ -60,6 +60,16 @@ const LedSmoothChunk_t lsqFadeInOut[] = {
         {csEnd}
 };
 
+const LedSmoothChunk_t lsqCharging[] = {
+        {csSetup, 207, LED_TOP_BRIGHTNESS},
+        {csSetup, 207, 45},
+        {csGoto, 0}
+};
+
+const LedSmoothChunk_t lsqChargingStopped[] = {
+        {csSetup, 207, 4},
+        {csEnd}
+};
 
 #endif
 
