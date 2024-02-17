@@ -11,7 +11,7 @@
 #include "board.h"
 
 #define IR_TX_ENABLED   TRUE
-#define IR_RX_ENABLED   TRUE
+#define IR_RX_ENABLED   FALSE
 
 // Delays, uS
 #define IR_HEADER_uS        2400UL

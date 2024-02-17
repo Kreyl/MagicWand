@@ -9,6 +9,7 @@
 #include "led.h"
 #include "SimpleSensors.h"
 #include "buttons.h"
+#include "EvtMsgIDs.h"
 //#include "FwUpdateF072.h"
 //#include "ir.h"
 
@@ -20,7 +21,46 @@ CmdUart_t Uart{CmdUartParams};
 void OnCmd(Shell_t *PShell);
 void ITask();
 
+// LEDs
+PinOutput_t PwrPin{LED_PWR_EN, omPushPull};
 LedSmooth_t Lumos{LUMOS_LED};
+PinOutput_t GreenFlash{GREEN_LED, omPushPull};
+LedSmooth_t SysLed{SYS_LED};
+
+// Buttons
+class Btn_t {
+private:
+    GPIO_TypeDef *PGpio;
+    uint16_t Pin;
+    PinPullUpDown_t PullUpDown;
+public:
+    Btn_t(GPIO_TypeDef *APGpio, uint16_t APin, PinPullUpDown_t APullUpDown) :
+        PGpio(APGpio), Pin(APin), PullUpDown(APullUpDown) {}
+    void Init() const { PinSetupInput(PGpio, Pin, PullUpDown); }
+    bool IsPressed() { return PinIsHi(PGpio, Pin); }
+};
+
+Btn_t Btns[] = { {BTN1_PIN}, {BTN2_PIN}, {BTN3_PIN} };
+
+static TmrKL_t CheckTmr {72, evtIdCheckTimer, tktPeriodic};
+static TmrKL_t SleepTmr {999, evtIdSleepTimer, tktOneShot};
+
+void CheckBtnAndDoAvada() {
+    if(Btns[0].IsPressed()) { // Avada
+        Printf("Avada\r");
+        GreenFlash.SetHi();
+        chThdSleepMilliseconds(153);
+        GreenFlash.SetLo();
+        // Wait btn release
+        while(Btns[0].IsPressed()) chThdSleepMilliseconds(72);
+    }
+}
+
+enum LumosState_t { lstaOff, lstaFadein, lstaOn, lstaFadeout };
+LumosState_t LumosState = lstaOff;
+
+static void EnterSleepNow();
+static void EnterSleep();
 
 // === Vector table moving to SRAM ==
 #if FROM_BOOT
@@ -44,9 +84,9 @@ void main() {
 #if FROM_BOOT
     MoveVectorTable();
 #endif
+
     // ==== Init Clock system ====
     Clk.EnablePrefetch();
-    Clk.SetupFlashLatency(8);
     Clk.UpdateFreqValues();
 
     // === Init OS ===
@@ -59,14 +99,24 @@ void main() {
     Printf("\r%S %S\r\n", APP_NAME, XSTRINGIFY(BUILD_TIME));
     Clk.PrintFreqs();
 
-//    Settings.Load();
-
     // LEDs
+    SysLed.Init();
+    SysLed.StartOrRestart(lsqOk);
+    PwrPin.Init();
+    PwrPin.SetHi(); // Enable LED power
     Lumos.Init();
+    Lumos.SetupSeqEndEvt(EvtMsg_t(evtIdLumosDone));
+    GreenFlash.Init();
 
-//    Lumos.Init();
-//    Lumos.StartOrRestart(lsqFadeIn);
-//    while(!FrontLEDs[1].IsIdle()) chThdSleepMilliseconds(45);
+    // Buttons
+    for(auto &Btn : Btns) Btn.Init();
+    CheckBtnAndDoAvada();
+    if(Btns[1].IsPressed() or Btns[2].IsPressed()) {
+        Lumos.StartOrRestart(lsqFadeIn);
+        LumosState = lstaFadein;
+    }
+
+    CheckTmr.StartOrRestart();
 
     ITask(); // Main cycle
 }
@@ -80,29 +130,41 @@ void ITask() {
                 while(((CmdUart_t*)Msg.Ptr)->TryParseRxBuff() == retvOk) OnCmd((Shell_t*)((CmdUart_t*)Msg.Ptr));
                 break;
 
-            case evtIdButtons:
-//                Printf("Btn %u %u\r", Msg.BtnEvtInfo.BtnID, Msg.BtnEvtInfo.Type);
-                // Main button == BTN1
-                if(Msg.BtnEvtInfo.BtnID == 0) {
-                    if(Msg.BtnEvtInfo.Type == beLongPress) {
-                        IsEnteringSleep = !IsEnteringSleep;
-                        if(IsEnteringSleep) Flames.FadeOut();
-                        else Flames.FadeIn();
-                    }
-                    else if(Msg.BtnEvtInfo.Type == beRelease) { // Show VBat
-                        uint8_t Percent = mV2PercentAlkaline(VBat);
-                        Printf("VBat: %umV; Percent: %u\r", VBat, Percent);
-                        ColorHSV_t hsv;
-                        if     (Percent <= 20) hsv = {0,   100, 100};
-                        else if(Percent <  60) hsv = {30,  100, 100};
-                        else if(Percent <  90) hsv = {120, 100, 100};
-                        else                   hsv = {240, 100, 100};
-                        Flames.ShowCharge(hsv);
+            case evtIdCheckTimer:
+                CheckBtnAndDoAvada();
+                // Check Lumos
+//                Printf("Sta: %u %u %u\r", LumosState, Btns[1].IsPressed(), Btns[2].IsPressed());
+                if(Btns[1].IsPressed() or Btns[2].IsPressed()) {
+                    if(LumosState == lstaOff or LumosState == lstaFadeout) {
+                        SleepTmr.Stop();
+                        Lumos.StartOrRestart(lsqFadeIn);
+                        LumosState = lstaFadein;
                     }
                 }
-                else if(Msg.BtnEvtInfo.BtnID == 1) Flames.SetNewSettings(Settings.GetNext());
-                else if(Msg.BtnEvtInfo.BtnID == 2) Flames.SetNewSettings(Settings.GetPrev());
+                else { // No btn is pressed
+                    switch(LumosState) {
+                        case lstaOff:
+                            SleepTmr.StartIfNotRunning();
+                            break;
+                        case lstaFadein:
+                        case lstaOn:
+                            Lumos.StartOrRestart(lsqFadeOut);
+                            LumosState = lstaFadeout;
+                            break;
+                        case lstaFadeout: break;
+                    } // switch
+                } // btns
                 break;
+
+            case evtIdLumosDone:
+                switch(LumosState) {
+                    case lstaFadein:  LumosState = lstaOn;  break;
+                    case lstaFadeout: LumosState = lstaOff; break;
+                    default: break; // lstaOn or lstaOff; must not happen
+                }
+                break;
+
+            case evtIdSleepTimer: EnterSleep(); break;
 
             default: break;
         } // switch
@@ -128,6 +190,22 @@ void ProcessCharging(PinSnsState_t *PState, uint32_t Len) {
 //    }
 }
 
+void EnterSleep() {
+    Printf("Entering sleep\r");
+    chThdSleepMilliseconds(45);
+    chSysLock();
+    EnterSleepNow();
+    chSysUnlock();
+}
+
+void EnterSleepNow() {
+    Sleep::EnableWakeup1Pin(); // Btn1
+    Sleep::EnableWakeup4Pin(); // Btn2
+    Sleep::EnableWakeup2Pin(); // Btn3
+    Sleep::EnableWakeup6Pin(); // USB Detect
+    Sleep::EnterStandby();
+}
+
 #if 1 // ======================= Command processing ============================
 void OnCmd(Shell_t *PShell) {
     Cmd_t *PCmd = &PShell->Cmd;
@@ -136,6 +214,15 @@ void OnCmd(Shell_t *PShell) {
     if(PCmd->NameIs("Ping")) PShell->Ok();
     else if(PCmd->NameIs("Version")) PShell->Print("Version: %S %S\r", APP_NAME, XSTRINGIFY(BUILD_TIME));
 //    else if(PCmd->NameIs("mem")) PrintMemoryInfo();
+
+    else if(PCmd->NameIs("PwrOn")) {
+        PinSetHi(LED_PWR_EN);
+        PShell->Ok();
+    }
+    else if(PCmd->NameIs("PwrOff")) {
+        PinSetLo(LED_PWR_EN);
+        PShell->Ok();
+    }
 
 
 #if 0 // ==== FW Update ====

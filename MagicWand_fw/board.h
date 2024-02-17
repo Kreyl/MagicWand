@@ -22,8 +22,8 @@
 #define STM32_ST_USE_TIMER      14
 #define SYS_TIM_CLK             (Clk.APBFreqHz)
 
-#define SIMPLESENSORS_ENABLED   TRUE
-#define BUTTONS_ENABLED         TRUE
+#define SIMPLESENSORS_ENABLED   FALSE
+#define BUTTONS_ENABLED         FALSE
 #define ADC_REQUIRED            FALSE
 #define I2C1_ENABLED            FALSE
 #define I2C_USE_SEMAPHORE       FALSE
@@ -47,9 +47,9 @@
 #define UART_RX_PIN     10
 
 // Buttons
-#define BTN1_PIN        GPIOA, 0  // WKUP1
-#define BTN2_PIN        GPIOA, 2  // WKUP4
-#define BTN3_PIN        GPIOC, 13 // WKUP2
+#define BTN1_PIN        GPIOA, 0,  pudPullDown // WKUP1
+#define BTN2_PIN        GPIOA, 2,  pudPullDown // WKUP4
+#define BTN3_PIN        GPIOC, 13, pudPullDown // WKUP2
 
 // LEDs
 #define SYS_LED         { GPIOB, 4, TIM3, 1, invNotInverted, omPushPull, 255 }

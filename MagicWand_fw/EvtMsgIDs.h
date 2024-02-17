@@ -18,7 +18,10 @@ enum EvtMsgId_t {
     evtIdPwrOffTimeout,
     evtIdLedsDone,
 
-    evtIdRadioCmd,
+    evtIdCheckTimer,
+    evtIdSleepTimer,
+
+    evtIdLumosDone,
 
     // Usb
     evtIdUsbConnect,

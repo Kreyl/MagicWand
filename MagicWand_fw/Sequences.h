@@ -12,14 +12,7 @@
 
 #if 0 // ======================== Simple LED blink =============================
 #define BLINK_DELAY_MS      180
-const BaseChunk_t lbsqOk[] = {
-        {csSetup, 1},
-        {csWait, 720},
-        {csSetup, 0},
-        {csEnd}
-};
-
-const BaseChunk_t lbsqBlink3[] = {
+const BaseChunk_t lbsqBlink[] = {
         {csSetup, 1},
         {csWait, BLINK_DELAY_MS},
         {csSetup, 0},
@@ -45,8 +38,19 @@ const BaseChunk_t lbsqChargingDone[] = {
 #if 1 // =========================== LED Smooth ================================
 #define LED_TOP_BRIGHTNESS  255
 
+const LedSmoothChunk_t lsqOk[] = {
+        {csSetup, 207, LED_TOP_BRIGHTNESS},
+        {csSetup, 207, 4},
+        {csEnd}
+};
+
 const LedSmoothChunk_t lsqFadeIn[] = {
         {csSetup, 207, LED_TOP_BRIGHTNESS},
+        {csEnd}
+};
+
+const LedSmoothChunk_t lsqFadeOut[] = {
+        {csSetup, 207, 0},
         {csEnd}
 };
 
@@ -56,49 +60,10 @@ const LedSmoothChunk_t lsqFadeInOut[] = {
         {csEnd}
 };
 
-const LedSmoothChunk_t lsqShot[] = {
-        {csSetup, 0, LED_TOP_BRIGHTNESS},
-        {csWait, 72},
-        {csSetup, 0, 0},
-        {csEnd}
-};
 
-
-#define RELOADING_BLINK_DELAY   72
-const LedSmoothChunk_t lsqReloading[] = {
-        {csSetup, 0, LED_TOP_BRIGHTNESS},
-        {csWait, RELOADING_BLINK_DELAY},
-        {csSetup, 0, 0},
-        {csWait, RELOADING_BLINK_DELAY},
-        {csGoto, 0}
-};
-
-const LedSmoothChunk_t lsqMagazinesEnded[] = {
-        {csSetup, 0, LED_TOP_BRIGHTNESS},
-        {csEnd}
-};
-
-const LedSmoothChunk_t lsqHit[] = {
-        {csSetup, 0, LED_TOP_BRIGHTNESS},
-        {csWait, 153},
-        {csSetup, 0, 0},
-        {csEnd}
-};
-
-const LedSmoothChunk_t lsqHitsEnded[] = {
-        {csSetup, 0, LED_TOP_BRIGHTNESS},
-        {csEnd}
-};
-
-const LedSmoothChunk_t lsqUsbCmd[] = {
-        {csSetup, 0, 0},
-        {csWait, 90},
-        {csSetup, 0, LED_TOP_BRIGHTNESS},
-        {csEnd}
-};
 #endif
 
-#if 1 // ============================= Beeper ==================================
+#if 0 // ============================= Beeper ==================================
 #define BEEP_VOLUME     1   // Maximum 10
 #define BEEP_VOLUME_MAX 11
 

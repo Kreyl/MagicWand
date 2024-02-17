@@ -1422,6 +1422,8 @@ static inline void EnableWakeup2Pin()  { PWR->CSR |=  PWR_CSR_EWUP2; }
 static inline void DisableWakeup2Pin() { PWR->CSR &= ~PWR_CSR_EWUP2; }
 static inline void EnableWakeup4Pin()  { PWR->CSR |=  PWR_CSR_EWUP4; }
 static inline void DisableWakeup4Pin() { PWR->CSR &= ~PWR_CSR_EWUP4; }
+static inline void EnableWakeup6Pin()  { PWR->CSR |=  PWR_CSR_EWUP6; }
+static inline void DisableWakeup6Pin() { PWR->CSR &= ~PWR_CSR_EWUP6; }
 static inline bool WasInStandby() { return (PWR->CSR & PWR_CSR_SBF); }
 static inline void ClearStandbyFlag() { PWR->CR |= PWR_CR_CSBF; }
 #endif
